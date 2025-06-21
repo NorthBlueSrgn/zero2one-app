@@ -1,21 +1,50 @@
-// src/components/NewPathModal.js
 import React from 'react';
-import { pathTemplates } from '../constants';
 
-export const NewPathModal = ({ onClose, onCreatePath, onShowCustom }) => (
+const pathTemplates = {
+  'football': {
+    name: 'Jugador',
+    icon: '⚽',
+    attributes: ['physical', 'health', 'resilience'],
+    color: 'from-green-600 to-emerald-800',
+    description: 'Master the beautiful game'
+  },
+  'chess': {
+    name: "Hunter's Mind",
+    icon: '♟️',
+    attributes: ['intelligence', 'resilience', 'creativity'],
+    color: 'from-purple-600 to-indigo-800',
+    description: 'Develop strategic mastery'
+  },
+  'language': {
+    name: 'Tower of Babel',
+    icon: '🗣️',
+    attributes: ['intelligence', 'creativity', 'resilience'],
+    color: 'from-blue-600 to-cyan-800',
+    description: 'Master new languages'
+  },
+  'art': {
+    name: 'Creative Flow',
+    icon: '🎨',
+    attributes: ['creativity', 'intelligence'],
+    color: 'from-pink-600 to-rose-800',
+    description: 'Express through art'
+  }
+};
+
+export const NewPathModal = ({ onClose, onCreatePath }) => (
   <div className="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
     <div className="bg-gray-900 border border-purple-800 rounded-lg p-6 max-w-md w-full mx-4">
-      <h3 className="text-xl font-bold mb-4 text-white">Choose Your Path</h3>
+      <h3 className="text-xl font-bold mb-4">Choose Your Path</h3>
       <div className="grid grid-cols-2 gap-3 mb-4">
         {Object.entries(pathTemplates).map(([key, template]) => (
           <button
             key={key}
             onClick={() => onCreatePath(key)}
-            className="p-4 border border-gray-700 rounded-lg hover:border-purple-500 transition-colors text-left bg-gray-800/50"
+            className="p-4 border border-gray-700 rounded-lg hover:border-purple-500 transition-colors text-left"
           >
             <div className="text-2xl mb-2">{template.icon}</div>
-            <div className="font-medium text-white">{template.name}</div>
-            <div className="text-sm text-gray-400">{key}</div>
+            <div className="font-medium">{template.name}</div>
+            <div className="text-sm text-gray-400">{template.description}</div>
             <div className="mt-2 flex flex-wrap gap-1">
               {template.attributes.map(attr => (
                 <span 
@@ -30,14 +59,8 @@ export const NewPathModal = ({ onClose, onCreatePath, onShowCustom }) => (
         ))}
       </div>
       <button
-        onClick={onShowCustom}
-        className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg transition-colors font-medium mb-2 text-white"
-      >
-        ✨ Create Custom Path
-      </button>
-      <button
         onClick={onClose}
-        className="w-full bg-gray-800 hover:bg-gray-700 py-2 rounded-lg transition-colors text-white"
+        className="w-full bg-gray-800 hover:bg-gray-700 py-2 rounded-lg transition-colors"
       >
         Cancel
       </button>
