@@ -175,7 +175,6 @@ const Zero2OneApp = () => {
     });
     addNotification(`Created custom path: ${template.name}`);
   };
-// src/components/Zero2OneApp.js - Part 2 (continuing from previous part)
 
   // Quest Completion Functions
   const togglePrerequisite = (pathId, prereqIndex) => {
@@ -360,8 +359,6 @@ const Zero2OneApp = () => {
       return acc + (path.completedToday.includes(index) ? 1 : 0);
     }, 0) / path.prerequisites.length * 100;
   };
-
-  // Render Component (continuing in Part 3 // src/components/Zero2OneApp.js - Part 3 (continuing from previous parts)
 
   // Render
   return (
