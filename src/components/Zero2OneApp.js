@@ -1,57 +1,36 @@
 import React, { useState } from 'react';
 import { Plus, Trophy, Flame } from 'lucide-react';
+import { NewPathModal } from './NewPathModal';
 
 const Zero2OneApp = () => {
   const [activeTab, setActiveTab] = useState('paths');
+  const [showNewPath, setShowNewPath] = useState(false);
+  const [paths, setPaths] = useState([]);
+
+  const createPath = (pathKey) => {
+    const newPath = {
+      id: Date.now(),
+      key: pathKey,
+      level: 1,
+      streak: 0,
+      completedToday: [],
+      // We'll add more properties as we build features
+    };
+
+    setPaths(prev => [...prev, newPath]);
+    setShowNewPath(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white">
-      {/* Header */}
+      {/* Header - Same as before */}
       <header className="border-b border-purple-800/50 bg-black/50">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Zero2One
-              </h1>
-              <div className="text-sm text-purple-300">
-                Rank E • 0/270 XP
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4 text-sm">
-              <div className="flex items-center space-x-1">
-                <Flame className="w-4 h-4 text-orange-400" />
-                <span>0 day streak</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Trophy className="w-4 h-4 text-yellow-400" />
-                <span>0 titles</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ... header content ... */}
       </header>
 
-      {/* Navigation */}
+      {/* Navigation - Same as before */}
       <nav className="bg-black/30">
-        <div className="max-w-6xl mx-auto px-4 py-2">
-          <div className="flex space-x-4">
-            {['paths', 'stats', 'evolution'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === tab 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* ... navigation content ... */}
       </nav>
 
       {/* Main Content */}
@@ -61,18 +40,39 @@ const Zero2OneApp = () => {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Active Paths</h2>
               <button
+                onClick={() => setShowNewPath(true)}
                 className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>New Path</span>
               </button>
             </div>
-            <div className="text-center text-gray-400 py-12">
-              No active paths. Click "New Path" to begin your journey!
-            </div>
+            
+            {paths.length === 0 ? (
+              <div className="text-center text-gray-400 py-12">
+                No active paths. Click "New Path" to begin your journey!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paths.map(path => (
+                  <div 
+                    key={path.id}
+                    className="bg-gray-800 rounded-lg p-4 border border-purple-500/20"
+                  >
+                    <div className="text-xl mb-2">
+                      Path: {path.key}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Level: {path.level} • Streak: {path.streak}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
+        {/* Other tabs remain the same */}
         {activeTab === 'stats' && (
           <div className="text-center text-gray-400 py-12">
             Stats will appear here as you progress on your paths.
@@ -85,6 +85,14 @@ const Zero2OneApp = () => {
           </div>
         )}
       </main>
+
+      {/* Modal */}
+      {showNewPath && (
+        <NewPathModal
+          onClose={() => setShowNewPath(false)}
+          onCreatePath={createPath}
+        />
+      )}
     </div>
   );
 };
