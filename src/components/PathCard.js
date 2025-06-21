@@ -4,19 +4,9 @@ import { Star, Flame } from 'lucide-react';
 import { ProgressBar } from './ui';
 
 export const PathCard = ({ path, onTogglePrerequisite }) => {
-  const getCompletionPercentage = () => {
-    return path.prerequisites.reduce((acc, prereq, index) => {
-      if (prereq.frequency === 'weekly') {
-        const progress = (path.weeklyProgress[index] || 0) / prereq.timesPerWeek;
-        return acc + (progress * (100 / path.prerequisites.length));
-      } else {
-        return acc + (path.completedToday.includes(index) ? (100 / path.prerequisites.length) : 0);
-      }
-    }, 0);
-  };
-
   return (
     <div className={`bg-gradient-to-br ${path.color} p-6 rounded-lg border border-purple-800/30`}>
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <span className="text-2xl">{path.icon}</span>
@@ -26,56 +16,52 @@ export const PathCard = ({ path, onTogglePrerequisite }) => {
           </div>
         </div>
         <div className="text-right">
-          <div className="text-sm opacity-75">Level {path.level}</div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm">Level {path.level}</span>
+            <div className="px-2 py-1 bg-purple-500/20 rounded-full text-xs">
+              Rank {path.rank}
+            </div>
+          </div>
           <div className="flex items-center space-x-1">
-            <Flame className="w-3 h-3" />
-            <span className="text-xs">{path.streak}</span>
+            <Flame className="w-3 h-3 text-orange-400" />
+            <span className="text-xs">{path.streak} day streak</span>
           </div>
         </div>
       </div>
 
+      {/* Tasks */}
       <div className="space-y-2 mb-4">
         {path.prerequisites.map((prereq, index) => {
-          const isCompleted = prereq.frequency === 'weekly'
-            ? (path.weeklyProgress[index] || 0) >= prereq.timesPerWeek
+          const isWeekly = prereq.frequency === 'weekly';
+          const progress = isWeekly ? path.weeklyProgress[index] || 0 : 0;
+          const isComplete = isWeekly 
+            ? progress >= prereq.timesPerWeek 
             : path.completedToday.includes(index);
-
-          const progress = prereq.frequency === 'weekly'
-            ? `${path.weeklyProgress[index] || 0}/${prereq.timesPerWeek}`
-            : null;
 
           return (
             <div
               key={index}
               onClick={() => onTogglePrerequisite(path.id, index)}
-              className={`flex items-center space-x-3 p-2 rounded cursor-pointer transition-all ${
-                isCompleted
-                  ? 'bg-green-600/30 border-green-500/50'
-                  : 'bg-black/20 border-gray-600/50 hover:bg-black/30'
-              } border`}
+              className={`flex items-center justify-between p-3 rounded cursor-pointer ${
+                isComplete 
+                  ? 'bg-green-500/20 border-green-500/50' 
+                  : 'bg-black/20 hover:bg-black/30'
+              } border transition-colors`}
             >
-              <div className={`w-4 h-4 rounded border-2 ${
-                isCompleted
-                  ? 'bg-green-500 border-green-500'
-                  : 'border-gray-500'
-              }`}>
-                {isCompleted && (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                )}
+              <div className="flex items-center space-x-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  isComplete ? 'bg-green-500 border-green-500' : 'border-gray-400'
+                }`} />
+                <div>
+                  <div className="text-sm font-medium">{prereq.name}</div>
+                  {isWeekly && (
+                    <div className="text-xs text-gray-300">
+                      {progress}/{prereq.timesPerWeek} times this week
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <span className={`text-sm ${isCompleted ? 'line-through opacity-75' : ''}`}>
-                  {prereq.name}
-                </span>
-                {progress && (
-                  <span className="text-xs ml-2 opacity-75">
-                    ({progress})
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center space-x-1 text-xs opacity-75">
+              <div className="flex items-center space-x-2 text-xs">
                 <Star className="w-3 h-3" />
                 <span>{prereq.xpReward} XP</span>
               </div>
@@ -84,12 +70,17 @@ export const PathCard = ({ path, onTogglePrerequisite }) => {
         })}
       </div>
 
+      {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Daily Progress</span>
-          <span>{Math.round(getCompletionPercentage())}%</span>
+          <span>Progress</span>
+          <span>{Math.round((path.completedToday.length / path.prerequisites.length) * 100)}%</span>
         </div>
-        <ProgressBar value={getCompletionPercentage()} max={100} color="blue" />
+        <ProgressBar 
+          value={(path.completedToday.length / path.prerequisites.length) * 100} 
+          max={100} 
+          color="blue" 
+        />
       </div>
     </div>
   );
