@@ -1,8 +1,9 @@
+// src/App.js
 import React from 'react';
-import Zero2OneApp from './components/Zero2OneApp';
+import { Zero2OneApp } from './components';
 
-function App() {
+const App = () => {
   return <Zero2OneApp />;
-}
+};
 
 export default App;
