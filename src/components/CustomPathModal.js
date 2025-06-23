@@ -1,4 +1,4 @@
-// src/components/CustomPathModal.jsx
+// src/components/CustomPathModal.js
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 
@@ -118,84 +118,6 @@ export const CustomPathModal = ({ onClose, onCreate }) => {
           </button>
         </div>
       </div>
-    </div>
-  );
-};
-
-// src/components/NewPathModal.jsx
-import React from 'react';
-import { PATH_TEMPLATES } from '../constants';
-
-export const NewPathModal = ({ onClose, onCreatePath, onCustomPath }) => {
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-purple-800 rounded-lg p-6 max-w-md w-full mx-4">
-        <h3 className="text-xl font-bold mb-4">Choose Your Path</h3>
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {Object.entries(PATH_TEMPLATES).map(([key, template]) => (
-            <button
-              key={key}
-              onClick={() => onCreatePath(template)}
-              className="p-4 border border-gray-700 rounded-lg hover:border-purple-500 transition-colors text-left"
-            >
-              <div className="text-2xl mb-2">{template.icon}</div>
-              <div className="font-medium">{template.name}</div>
-              <div className="text-sm text-gray-400">{key}</div>
-            </button>
-          ))}
-        </div>
-        <div className="border-t border-gray-700 pt-4">
-          <button
-            onClick={onCustomPath}
-            className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg transition-colors font-medium"
-          >
-            ✨ Create Custom Path
-          </button>
-        </div>
-        <button
-          onClick={onClose}
-          className="mt-2 w-full bg-gray-800 hover:bg-gray-700 py-2 rounded-lg transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// src/components/TaskItem.jsx
-import React from 'react';
-
-export const TaskItem = ({ task, type, onComplete }) => {
-  const isCompleted = type === 'daily' 
-    ? task.completed 
-    : (task.completedCount >= (task.frequency || 1));
-
-  return (
-    <div 
-      className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
-        isCompleted 
-          ? 'bg-green-600/30' 
-          : 'bg-gray-800/50 hover:bg-gray-700/50'
-      }`}
-    >
-      <button 
-        onClick={onComplete}
-        className={`w-5 h-5 rounded-full border-2 transition-all ${
-          isCompleted 
-            ? 'bg-green-500 border-green-500' 
-            : 'border-gray-500'
-        }`}
-      />
-      <div className="flex-1">
-        <div className="font-medium">{task.name}</div>
-        {type === 'weekly' && (
-          <div className="text-sm text-gray-400">
-            {task.completedCount || 0}/{task.frequency || 1} times this week
-          </div>
-        )}
-      </div>
-      <div className="text-sm text-purple-400">+{task.xpReward} XP</div>
     </div>
   );
 };
