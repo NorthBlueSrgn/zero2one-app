@@ -1,115 +1,201 @@
-// src/components/CustomPathModal.js
-import React from 'react';
+// src/components/CustomPathModal.jsx
+import React, { useState } from 'react';
+import { Plus } from 'lucide-react';
 
-export const CustomPathModal = ({ customPath, setCustomPath, onClose, onCreate }) => (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
-    <div className="bg-gray-900 border border-purple-800 rounded-lg p-6 max-w-lg w-full mx-4">
-      <h3 className="text-xl font-bold mb-4 text-white">Create Custom Path</h3>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2 text-white">Path Name</label>
+export const CustomPathModal = ({ onClose, onCreate }) => {
+  const [pathData, setPathData] = useState({
+    name: '',
+    icon: '⭐',
+    color: 'from-purple-600 to-indigo-800',
+    dailyTasks: [],
+    weeklyTasks: [],
+    titles: ['Novice', 'Adept', 'Master'],
+    primaryAttribute: 'resilience',
+    attributes: ['resilience']
+  });
+
+  const [newTask, setNewTask] = useState({
+    name: '',
+    type: 'daily',
+    xpReward: 10,
+    frequency: 1
+  });
+
+  const addTask = () => {
+    if (!newTask.name) return;
+
+    const taskList = newTask.type === 'daily' ? 'dailyTasks' : 'weeklyTasks';
+    const task = {
+      id: Date.now(),
+      ...newTask,
+      attributeRewards: {
+        [pathData.primaryAttribute]: newTask.type === 'daily' ? 1 : 2
+      }
+    };
+
+    setPathData(prev => ({
+      ...prev,
+      [taskList]: [...prev[taskList], task]
+    }));
+
+    setNewTask({
+      name: '',
+      type: 'daily',
+      xpReward: 10,
+      frequency: 1
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
+      <div className="bg-gray-900 border border-purple-800 rounded-lg p-6 max-w-lg w-full mx-4">
+        <h3 className="text-xl font-bold mb-4">Create Custom Path</h3>
+        
+        <div className="space-y-4">
           <input
             type="text"
-            value={customPath.name}
-            onChange={(e) => setCustomPath(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Music, Cooking, Photography..."
-            className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none"
+            placeholder="Path Name"
+            value={pathData.name}
+            onChange={e => setPathData(prev => ({ ...prev, name: e.target.value }))}
+            className="w-full bg-gray-800 rounded-lg px-4 py-2"
           />
-          <p className="text-xs text-gray-400 mt-1">
-            The system will auto-generate appropriate prerequisites and themes!
-          </p>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">Add Tasks</h4>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                placeholder="Task Name"
+                value={newTask.name}
+                onChange={e => setNewTask(prev => ({ ...prev, name: e.target.value }))}
+                className="flex-1 bg-gray-800 rounded-lg px-4 py-2"
+              />
+              <select
+                value={newTask.type}
+                onChange={e => setNewTask(prev => ({ ...prev, type: e.target.value }))}
+                className="bg-gray-800 rounded-lg px-4 py-2"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+              </select>
+              <button
+                onClick={addTask}
+                className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="font-medium">Tasks</h4>
+            {pathData.dailyTasks.map(task => (
+              <div key={task.id} className="bg-gray-800 rounded-lg px-4 py-2">
+                {task.name} (Daily)
+              </div>
+            ))}
+            {pathData.weeklyTasks.map(task => (
+              <div key={task.id} className="bg-gray-800 rounded-lg px-4 py-2">
+                {task.name} (Weekly)
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2 text-white">
-            Custom Prerequisites (Optional)
-          </label>
-          {customPath.prerequisites.map((prereq, index) => (
-            <div key={index} className="mb-3">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={prereq.name}
-                  onChange={(e) => {
-                    const newPrereqs = [...customPath.prerequisites];
-                    newPrereqs[index] = { ...prereq, name: e.target.value };
-                    setCustomPath(prev => ({ ...prev, prerequisites: newPrereqs }));
-                  }}
-                  placeholder={`Prerequisite ${index + 1}...`}
-                  className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none"
-                />
-                <select
-                  value={prereq.frequency}
-                  onChange={(e) => {
-                    const newPrereqs = [...customPath.prerequisites];
-                    newPrereqs[index] = { 
-                      ...prereq, 
-                      frequency: e.target.value,
-                      timesPerWeek: e.target.value === 'weekly' ? 3 : undefined
-                    };
-                    setCustomPath(prev => ({ ...prev, prerequisites: newPrereqs }));
-                  }}
-                  className="w-24 bg-gray-800 border border-gray-600 rounded-lg px-2 py-2 text-white focus:border-purple-500 focus:outline-none"
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                </select>
-              </div>
-              {prereq.frequency === 'weekly' && (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-sm text-gray-400">Times per week:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="7"
-                    value={prereq.timesPerWeek || 3}
-                    onChange={(e) => {
-                      const newPrereqs = [...customPath.prerequisites];
-                      newPrereqs[index] = { 
-                        ...prereq, 
-                        timesPerWeek: parseInt(e.target.value) 
-                      };
-                      setCustomPath(prev => ({ ...prev, prerequisites: newPrereqs }));
-                    }}
-                    className="w-16 bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-white focus:border-purple-500 focus:outline-none"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="flex space-x-3 mt-6">
           <button
-            onClick={() => {
-              setCustomPath(prev => ({
-                ...prev,
-                prerequisites: [
-                  ...prev.prerequisites,
-                  { name: '', frequency: 'daily', xpReward: 5, attributeRewards: {} }
-                ]
-              }));
-            }}
-            className="text-sm text-purple-400 hover:text-purple-300 mt-2"
+            onClick={() => onCreate(pathData)}
+            disabled={!pathData.name || (!pathData.dailyTasks.length && !pathData.weeklyTasks.length)}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 py-2 rounded-lg"
           >
-            + Add prerequisite
+            Create Path
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-800 hover:bg-gray-700 py-2 rounded-lg"
+          >
+            Cancel
           </button>
         </div>
       </div>
+    </div>
+  );
+};
 
-      <div className="flex space-x-3 mt-6">
-        <button
-          onClick={onCreate}
-          disabled={!customPath.name.trim()}
-          className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-2 rounded-lg transition-colors font-medium text-white"
-        >
-          Create Path
-        </button>
+// src/components/NewPathModal.jsx
+import React from 'react';
+import { PATH_TEMPLATES } from '../constants';
+
+export const NewPathModal = ({ onClose, onCreatePath, onCustomPath }) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
+      <div className="bg-gray-900 border border-purple-800 rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 className="text-xl font-bold mb-4">Choose Your Path</h3>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {Object.entries(PATH_TEMPLATES).map(([key, template]) => (
+            <button
+              key={key}
+              onClick={() => onCreatePath(template)}
+              className="p-4 border border-gray-700 rounded-lg hover:border-purple-500 transition-colors text-left"
+            >
+              <div className="text-2xl mb-2">{template.icon}</div>
+              <div className="font-medium">{template.name}</div>
+              <div className="text-sm text-gray-400">{key}</div>
+            </button>
+          ))}
+        </div>
+        <div className="border-t border-gray-700 pt-4">
+          <button
+            onClick={onCustomPath}
+            className="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg transition-colors font-medium"
+          >
+            ✨ Create Custom Path
+          </button>
+        </div>
         <button
           onClick={onClose}
-          className="flex-1 bg-gray-800 hover:bg-gray-700 py-2 rounded-lg transition-colors text-white"
+          className="mt-2 w-full bg-gray-800 hover:bg-gray-700 py-2 rounded-lg transition-colors"
         >
           Cancel
         </button>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+// src/components/TaskItem.jsx
+import React from 'react';
+
+export const TaskItem = ({ task, type, onComplete }) => {
+  const isCompleted = type === 'daily' 
+    ? task.completed 
+    : (task.completedCount >= (task.frequency || 1));
+
+  return (
+    <div 
+      className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
+        isCompleted 
+          ? 'bg-green-600/30' 
+          : 'bg-gray-800/50 hover:bg-gray-700/50'
+      }`}
+    >
+      <button 
+        onClick={onComplete}
+        className={`w-5 h-5 rounded-full border-2 transition-all ${
+          isCompleted 
+            ? 'bg-green-500 border-green-500' 
+            : 'border-gray-500'
+        }`}
+      />
+      <div className="flex-1">
+        <div className="font-medium">{task.name}</div>
+        {type === 'weekly' && (
+          <div className="text-sm text-gray-400">
+            {task.completedCount || 0}/{task.frequency || 1} times this week
+          </div>
+        )}
+      </div>
+      <div className="text-sm text-purple-400">+{task.xpReward} XP</div>
+    </div>
+  );
+};
