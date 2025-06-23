@@ -1,5 +1,6 @@
 // src/components/index.js
+export { Zero2OneApp } from './Zero2OneApp';
 export { CustomPathModal } from './CustomPathModal';
 export { NewPathModal } from './NewPathModal';
 export { TaskItem } from './TaskItem';
-export { Zero2OneApp } from './Zero2OneApp';
+export { PathCard } from './PathCard';
