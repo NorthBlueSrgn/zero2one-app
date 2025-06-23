@@ -1,10 +1,4 @@
 // src/constants/index.js
-export * from './ranks';
-export * from './paths';
-export * from './attributes';
-export * from './initialState';
-
-// src/constants/ranks.js
 export const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 
 export const RANK_REQUIREMENTS = {
@@ -18,7 +12,6 @@ export const RANK_REQUIREMENTS = {
   'SSS': { xp: 17000, daysRequired: 150 } // 5 months
 };
 
-// src/constants/paths.js
 export const PATH_TEMPLATES = {
   'meditation': {
     name: 'Inner Peace',
@@ -86,7 +79,6 @@ export const PATH_TEMPLATES = {
   }
 };
 
-// src/constants/attributes.js
 export const ATTRIBUTES = {
   spiritual: {
     icon: '🧘',
@@ -120,7 +112,6 @@ export const ATTRIBUTES = {
   }
 };
 
-// src/constants/initialState.js
 export const INITIAL_USER_STATS = {
   rank: 'E',
   xp: 0,
