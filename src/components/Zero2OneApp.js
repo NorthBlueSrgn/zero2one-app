@@ -1,24 +1,58 @@
 // src/components/Zero2OneApp.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Trophy, Zap, Brain, Heart, Dumbbell, Palette, Shield, Star, Flame, Trash, Settings } from 'lucide-react';
-import { TaskItem } from './TaskItem';
-import { PathCard } from './PathCard';
-import { NewPathModal } from './NewPathModal';
-import { CustomPathModal } from './CustomPathModal';
-import { useTaskReset } from '../hooks/useTaskReset';
-import { useNotifications } from '../hooks/useNotifications';
 import { 
-  RANKS, 
-  RANK_REQUIREMENTS, 
-  INITIAL_USER_STATS, 
-  PATH_TEMPLATES,
-  ATTRIBUTES,
-  calculateAttributeRank,
-  getNextRank
-} from '../constants';
+  Plus, Trophy, Zap, Brain, Heart, 
+  Dumbbell, Palette, Shield, Star, 
+  Flame, Trash, ChevronRight 
+} from 'lucide-react';
+import { CustomPathModal } from './CustomPathModal';
+import { NewPathModal } from './NewPathModal';
+import { TaskItem } from './TaskItem';
+
+// Constants for progression
+const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
+const RANK_REQUIREMENTS = {
+  'E': { xp: 0, daysRequired: 0 },
+  'D': { xp: 600, daysRequired: 60 }, // 2 months
+  'C': { xp: 1500, daysRequired: 90 }, // 3 months
+  'B': { xp: 3000, daysRequired: 90 }, // 3 months
+  'A': { xp: 5000, daysRequired: 120 }, // 4 months
+  'S': { xp: 8000, daysRequired: 150 }, // 5 months
+  'SS': { xp: 12000, daysRequired: 150 }, // 5 months
+  'SSS': { xp: 17000, daysRequired: 150 } // 5 months
+};
+
+const INITIAL_USER_STATS = {
+  rank: 'E',
+  xp: 0,
+  xpToNext: 600, // XP needed for rank D
+  attributes: {
+    spiritual: 0,
+    health: 0,
+    intelligence: 0,
+    physical: 0,
+    creativity: 0,
+    resilience: 0
+  },
+  attributeRanks: {
+    spiritual: 'E',
+    health: 'E',
+    intelligence: 'E',
+    physical: 'E',
+    creativity: 'E',
+    resilience: 'E'
+  },
+  startDate: new Date().toISOString(),
+  statistics: {
+    tasksCompleted: 0,
+    pathsCreated: 0,
+    longestStreak: 0,
+    totalXPGained: 0
+  }
+};
 
 export const Zero2OneApp = () => {
-  // Core State Management
+  // Core State
   const [userStats, setUserStats] = useState(() => {
     const saved = localStorage.getItem('userStats');
     return saved ? JSON.parse(saved) : INITIAL_USER_STATS;
@@ -32,10 +66,7 @@ export const Zero2OneApp = () => {
   const [activeTab, setActiveTab] = useState('paths');
   const [showNewPath, setShowNewPath] = useState(false);
   const [showCustomPath, setShowCustomPath] = useState(false);
-  const { notifications, addNotification } = useNotifications();
-
-  // Task Reset Hook
-  useTaskReset(setPaths);
+  const [notifications, setNotifications] = useState([]);
 
   // Persistence
   useEffect(() => {
@@ -43,7 +74,53 @@ export const Zero2OneApp = () => {
     localStorage.setItem('paths', JSON.stringify(paths));
   }, [userStats, paths]);
 
-  // XP and Progression System
+  // Task Reset System
+  useEffect(() => {
+    const checkResets = () => {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentWeekStart = getWeekStart(now);
+
+      setPaths(prevPaths => prevPaths.map(path => {
+        let updated = { ...path };
+
+        // Daily reset
+        if (path.lastDailyReset !== today) {
+          updated.dailyTasks = updated.dailyTasks.map(task => ({
+            ...task,
+            completed: false
+          }));
+          updated.lastDailyReset = today;
+        }
+
+        // Weekly reset
+        if (path.lastWeeklyReset !== currentWeekStart) {
+          updated.weeklyTasks = updated.weeklyTasks.map(task => ({
+            ...task,
+            completedCount: 0
+          }));
+          updated.lastWeeklyReset = currentWeekStart;
+        }
+
+        return updated;
+      }));
+    };
+
+    const interval = setInterval(checkResets, 60000); // Check every minute
+    checkResets(); // Initial check
+    return () => clearInterval(interval);
+  }, []);
+
+  // Notification System
+  const addNotification = useCallback((message, type = 'info') => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  }, []);
+
+  // Progression System
   const calculateXPGain = useCallback((task, path) => {
     const baseXP = task.xpReward;
     const streakBonus = Math.min(path.streak * 0.1, 0.5); // Max 50% bonus
@@ -56,22 +133,28 @@ export const Zero2OneApp = () => {
       const newXP = prev.xp + xpGain;
       const newAttributes = { ...prev.attributes };
       const newAttributeRanks = { ...prev.attributeRanks };
+      const daysSinceStart = getDaysSinceStart(prev.startDate);
 
-      // Update attributes and their ranks
+      // Update attributes
       Object.entries(attributeGains).forEach(([attr, gain]) => {
         newAttributes[attr] += gain;
-        newAttributeRanks[attr] = calculateAttributeRank(newAttributes[attr]);
+        // Calculate new rank for each attribute
+        for (const rank of [...RANKS].reverse()) {
+          if (newAttributes[attr] >= RANK_REQUIREMENTS[rank].xp && 
+              daysSinceStart >= RANK_REQUIREMENTS[rank].daysRequired) {
+            newAttributeRanks[attr] = rank;
+            break;
+          }
+        }
       });
 
-      // Calculate new rank based on XP and time
-      const daysSinceStart = Math.floor(
-        (new Date().getTime() - new Date(prev.startDate).getTime()) / (1000 * 60 * 60 * 24)
-      );
-
+      // Calculate overall rank
       let newRank = 'E';
-      for (const [rank, requirements] of Object.entries(RANK_REQUIREMENTS)) {
-        if (newXP >= requirements.xp && daysSinceStart >= requirements.daysRequired) {
+      for (const rank of [...RANKS].reverse()) {
+        if (newXP >= RANK_REQUIREMENTS[rank].xp && 
+            daysSinceStart >= RANK_REQUIREMENTS[rank].daysRequired) {
           newRank = rank;
+          break;
         }
       }
 
@@ -89,8 +172,8 @@ export const Zero2OneApp = () => {
         xpToNext: RANK_REQUIREMENTS[getNextRank(newRank)].xp,
         statistics: {
           ...prev.statistics,
-          totalXPGained: prev.statistics.totalXPGained + xpGain,
-          tasksCompleted: prev.statistics.tasksCompleted + 1
+          tasksCompleted: prev.statistics.tasksCompleted + 1,
+          totalXPGained: prev.statistics.totalXPGained + xpGain
         }
       };
     });
@@ -128,7 +211,7 @@ export const Zero2OneApp = () => {
     }));
   }, [addNotification]);
 
-  // Path Management
+    // Path Management
   const createPath = useCallback((template) => {
     const newPath = {
       id: Date.now(),
@@ -138,13 +221,11 @@ export const Zero2OneApp = () => {
       streak: 0,
       dailyTasks: template.dailyTasks.map(task => ({
         ...task,
-        completed: false,
-        completedAt: null
+        completed: false
       })),
       weeklyTasks: template.weeklyTasks.map(task => ({
         ...task,
-        completedCount: 0,
-        lastCompleted: null
+        completedCount: 0
       })),
       lastDailyReset: new Date().toISOString().split('T')[0],
       lastWeeklyReset: getWeekStart(new Date()),
@@ -202,15 +283,83 @@ export const Zero2OneApp = () => {
         }
       }
 
+      const newStreak = calculateNewStreak(path, updatedTasks);
+      if (newStreak > path.streak) {
+        addNotification(`${path.name} streak: ${newStreak} days! 🔥`);
+      }
+
       return {
         ...path,
         [tasks]: updatedTasks,
-        streak: calculateNewStreak(path, updatedTasks)
+        streak: newStreak
       };
     }));
-  }, [calculateXPGain, updateProgression]);
+  }, [calculateXPGain, updateProgression, addNotification]);
 
-    // UI Components
+  // UI Components
+  const PathCard = ({ path }) => (
+    <div className={`bg-gradient-to-br ${path.color} p-6 rounded-lg border border-purple-800/30`}>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-3">
+          <span className="text-2xl">{path.icon}</span>
+          <div>
+            <h3 className="font-bold">{path.name}</h3>
+            <p className="text-sm opacity-75">Level {path.level} • {path.currentTitle}</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => removePath(path.id)}
+          className="p-2 hover:bg-black/20 rounded-full transition-all"
+        >
+          <Trash className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-medium mb-2">Daily Tasks</h4>
+          <div className="space-y-2">
+            {path.dailyTasks.map(task => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                type="daily"
+                onComplete={() => completeTask(path.id, task.id, 'daily')}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-medium mb-2">Weekly Goals</h4>
+          <div className="space-y-2">
+            {path.weeklyTasks.map(task => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                type="weekly"
+                onComplete={() => completeTask(path.id, task.id, 'weekly')}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-white/10">
+          <div className="flex justify-between text-sm mb-1">
+            <span>Progress to Level {path.level + 1}</span>
+            <span>{Math.round((path.experience / (path.level * 100)) * 100)}%</span>
+          </div>
+          <div className="w-full bg-black/30 rounded-full h-2">
+            <div 
+              className="bg-white/30 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(path.experience / (path.level * 100)) * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const RadarChart = ({ attributes }) => {
     const maxValue = Math.max(...Object.values(attributes));
     const normalizedValues = Object.entries(attributes).map(([key, value]) => ({
@@ -221,7 +370,6 @@ export const Zero2OneApp = () => {
     return (
       <div className="relative w-48 h-48 mx-auto">
         <svg viewBox="0 0 200 200" className="w-full h-full">
-          {/* Background circles */}
           {[20, 40, 60, 80].map(radius => (
             <circle
               key={radius}
@@ -234,7 +382,6 @@ export const Zero2OneApp = () => {
             />
           ))}
           
-          {/* Radar lines */}
           {normalizedValues.map((_, index) => {
             const angle = (index / normalizedValues.length) * 2 * Math.PI - Math.PI / 2;
             const x = 100 + Math.cos(angle) * 80;
@@ -252,7 +399,6 @@ export const Zero2OneApp = () => {
             );
           })}
           
-          {/* Data polygon */}
           <polygon
             points={normalizedValues.map((item, index) => {
               const angle = (index / normalizedValues.length) * 2 * Math.PI - Math.PI / 2;
@@ -266,7 +412,6 @@ export const Zero2OneApp = () => {
             strokeWidth="2"
           />
           
-          {/* Labels */}
           {normalizedValues.map((item, index) => {
             const angle = (index / normalizedValues.length) * 2 * Math.PI - Math.PI / 2;
             const x = 100 + Math.cos(angle) * 95;
@@ -310,14 +455,12 @@ export const Zero2OneApp = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 text-sm">
+            <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="px-3 py-1 bg-black/30 rounded-full">
-                  <div className="flex items-center space-x-1">
-                    <Flame className="w-4 h-4 text-orange-400" />
-                    <span>{userStats.statistics.longestStreak} day streak</span>
-                  </div>
-                </div>
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span className="text-sm">
+                  {paths.reduce((max, path) => Math.max(max, path.streak), 0)} day streak
+                </span>
               </div>
             </div>
           </div>
@@ -372,12 +515,7 @@ export const Zero2OneApp = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paths.map(path => (
-                <PathCard
-                  key={path.id}
-                  path={path}
-                  onRemove={removePath}
-                  onCompleteTask={completeTask}
-                />
+                <PathCard key={path.id} path={path} />
               ))}
             </div>
           </div>
@@ -386,86 +524,21 @@ export const Zero2OneApp = () => {
         {activeTab === 'stats' && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Radar Chart */}
               <div className="bg-gray-900/50 border border-purple-800/30 rounded-lg p-6">
                 <h3 className="text-xl font-bold mb-4 text-center">Attribute Distribution</h3>
                 <RadarChart attributes={userStats.attributes} />
               </div>
 
-              {/* Attribute Details */}
               <div className="bg-gray-900/50 border border-purple-800/30 rounded-lg p-6">
-                <h3 className="text-xl font-bold mb-4">Attributes</h3>
-                <div className="space-y-3">
-                  {Object.entries(userStats.attributes).map(([attr, value]) => {
-                    const Icon = ATTRIBUTES[attr].icon;
-                    return (
-                      <div key={attr} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${ATTRIBUTES[attr].color}`}>
-                            {Icon}
-                          </div>
-                          <span className="capitalize font-medium">{attr}</span>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-32 bg-gray-800 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
-                              style={{ width: `${(value / RANK_REQUIREMENTS[userStats.attributeRanks[attr]].xp) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-bold w-8 text-right">{value}</span>
-                          <span className="text-sm font-bold w-6 text-right">{userStats.attributeRanks[attr]}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div className="bg-gray-900/50 border border-purple-800/30 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4">Progress Statistics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(userStats.statistics).map(([key, value]) => (
-                  <div key={key} className="bg-black/30 rounded-lg p-4">
-                    <div className="text-sm text-gray-400">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
-                    <div className="text-2xl font-bold">{value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'evolution' && (
-          <div className="space-y-6">
-            <div className="bg-gray-900/50 border border-purple-800/30 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4">Rank Evolution</h3>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  {RANKS.map((rank, index) => (
-                    <div
-                      key={rank}
-                      className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold ${
-                        rank === userStats.rank
-                          ? 'border-purple-500 bg-purple-500 text-white'
-                          : RANKS.indexOf(userStats.rank) > index
-                          ? 'border-green-500 bg-green-500/20 text-green-300'
-                          : 'border-gray-600 text-gray-500'
-                      }`}
-                    >
-                      {rank}
+                <h3 className="text-xl font-bold mb-4">Statistics</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(userStats.statistics).map(([key, value]) => (
+                    <div key={key} className="bg-black/30 rounded-lg p-4">
+                      <div className="text-sm text-gray-400">{key.replace(/([A-Z])/g, ' $1').trim()}</div>
+                      <div className="text-2xl font-bold">{value}</div>
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className="text-sm text-gray-400">
-                Next rank requirements:
-                <ul className="mt-2 space-y-1">
-                  <li>• XP: {userStats.xpToNext - userStats.xp} more needed</li>
-                  <li>• Time: {Math.max(0, RANK_REQUIREMENTS[getNextRank(userStats.rank)].daysRequired - getDaysSinceStart(userStats.startDate))} days remaining</li>
-                </ul>
               </div>
             </div>
           </div>
@@ -518,6 +591,11 @@ const getDaysSinceStart = (startDate) => {
   return Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
 };
 
+const getNextRank = (currentRank) => {
+  const currentIndex = RANKS.indexOf(currentRank);
+  return currentIndex < RANKS.length - 1 ? RANKS[currentIndex + 1] : currentRank;
+};
+
 const calculateNewStreak = (path, tasks) => {
   const today = new Date().toISOString().split('T')[0];
   if (path.lastDailyReset !== today) return 0;
@@ -530,5 +608,4 @@ const calculateNewStreak = (path, tasks) => {
 };
 
 export default Zero2OneApp;
-
 
