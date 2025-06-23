@@ -14,51 +14,9 @@ import {
   ATTRIBUTES,
   PATH_TEMPLATES,
   INITIAL_USER_STATS
-} from '../constants'; // Direct import from constants/index.js
+} from '../constants';
 
-// Constants for progression
-const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
-const RANK_REQUIREMENTS = {
-  'E': { xp: 0, daysRequired: 0 },
-  'D': { xp: 600, daysRequired: 60 }, // 2 months
-  'C': { xp: 1500, daysRequired: 90 }, // 3 months
-  'B': { xp: 3000, daysRequired: 90 }, // 3 months
-  'A': { xp: 5000, daysRequired: 120 }, // 4 months
-  'S': { xp: 8000, daysRequired: 150 }, // 5 months
-  'SS': { xp: 12000, daysRequired: 150 }, // 5 months
-  'SSS': { xp: 17000, daysRequired: 150 } // 5 months
-};
-
-const INITIAL_USER_STATS = {
-  rank: 'E',
-  xp: 0,
-  xpToNext: 600, // XP needed for rank D
-  attributes: {
-    spiritual: 0,
-    health: 0,
-    intelligence: 0,
-    physical: 0,
-    creativity: 0,
-    resilience: 0
-  },
-  attributeRanks: {
-    spiritual: 'E',
-    health: 'E',
-    intelligence: 'E',
-    physical: 'E',
-    creativity: 'E',
-    resilience: 'E'
-  },
-  startDate: new Date().toISOString(),
-  statistics: {
-    tasksCompleted: 0,
-    pathsCreated: 0,
-    longestStreak: 0,
-    totalXPGained: 0
-  }
-};
-
-export const Zero2OneApp = () => {
+const Zero2OneApp = () => {
   // Core State
   const [userStats, setUserStats] = useState(() => {
     const saved = localStorage.getItem('userStats');
@@ -127,7 +85,7 @@ export const Zero2OneApp = () => {
     }, 5000);
   }, []);
 
-  // Progression System
+  // XP and Progression System
   const calculateXPGain = useCallback((task, path) => {
     const baseXP = task.xpReward;
     const streakBonus = Math.min(path.streak * 0.1, 0.5); // Max 50% bonus
@@ -304,69 +262,6 @@ export const Zero2OneApp = () => {
   }, [calculateXPGain, updateProgression, addNotification]);
 
   // UI Components
-  const PathCard = ({ path }) => (
-    <div className={`bg-gradient-to-br ${path.color} p-6 rounded-lg border border-purple-800/30`}>
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-3">
-          <span className="text-2xl">{path.icon}</span>
-          <div>
-            <h3 className="font-bold">{path.name}</h3>
-            <p className="text-sm opacity-75">Level {path.level} • {path.currentTitle}</p>
-          </div>
-        </div>
-        <button 
-          onClick={() => removePath(path.id)}
-          className="p-2 hover:bg-black/20 rounded-full transition-all"
-        >
-          <Trash className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <h4 className="font-medium mb-2">Daily Tasks</h4>
-          <div className="space-y-2">
-            {path.dailyTasks.map(task => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                type="daily"
-                onComplete={() => completeTask(path.id, task.id, 'daily')}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h4 className="font-medium mb-2">Weekly Goals</h4>
-          <div className="space-y-2">
-            {path.weeklyTasks.map(task => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                type="weekly"
-                onComplete={() => completeTask(path.id, task.id, 'weekly')}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-white/10">
-          <div className="flex justify-between text-sm mb-1">
-            <span>Progress to Level {path.level + 1}</span>
-            <span>{Math.round((path.experience / (path.level * 100)) * 100)}%</span>
-          </div>
-          <div className="w-full bg-black/30 rounded-full h-2">
-            <div 
-              className="bg-white/30 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(path.experience / (path.level * 100)) * 100}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const RadarChart = ({ attributes }) => {
     const maxValue = Math.max(...Object.values(attributes));
     const normalizedValues = Object.entries(attributes).map(([key, value]) => ({
@@ -522,7 +417,66 @@ export const Zero2OneApp = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paths.map(path => (
-                <PathCard key={path.id} path={path} />
+                <div key={path.id} className={`bg-gradient-to-br ${path.color} p-6 rounded-lg border border-purple-800/30`}>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{path.icon}</span>
+                      <div>
+                        <h3 className="font-bold">{path.name}</h3>
+                        <p className="text-sm opacity-75">Level {path.level} • {path.currentTitle}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removePath(path.id)}
+                      className="p-2 hover:bg-black/20 rounded-full transition-all"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Daily Tasks</h4>
+                      <div className="space-y-2">
+                        {path.dailyTasks.map(task => (
+                          <TaskItem
+                            key={task.id}
+                            task={task}
+                            type="daily"
+                            onComplete={() => completeTask(path.id, task.id, 'daily')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium mb-2">Weekly Goals</h4>
+                      <div className="space-y-2">
+                        {path.weeklyTasks.map(task => (
+                          <TaskItem
+                            key={task.id}
+                            task={task}
+                            type="weekly"
+                            onComplete={() => completeTask(path.id, task.id, 'weekly')}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Path Progress</span>
+                        <span>{Math.round((path.experience / (path.level * 100)) * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-black/30 rounded-full h-2">
+                        <div 
+                          className="bg-white/30 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(path.experience / (path.level * 100)) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
