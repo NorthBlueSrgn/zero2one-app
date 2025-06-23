@@ -15,7 +15,7 @@ export const RANK_REQUIREMENTS = {
   'A': { xp: 5000, daysRequired: 120 }, // 4 months
   'S': { xp: 8000, daysRequired: 150 }, // 5 months
   'SS': { xp: 12000, daysRequired: 150 }, // 5 months
-  'SSS': { xp: 17000, daysRequired: 150 }, // 5 months
+  'SSS': { xp: 17000, daysRequired: 150 } // 5 months
 };
 
 // src/constants/paths.js
@@ -83,70 +83,6 @@ export const PATH_TEMPLATES = {
     ],
     titles: ['Rookie', 'Athlete', 'Elite', 'Champion'],
     perk: '+15% Physical gains from workout tasks'
-  },
-  'learning': {
-    name: 'Knowledge Seeker',
-    icon: '📚',
-    color: 'from-purple-600 to-indigo-800',
-    attributes: ['intelligence', 'creativity'],
-    primaryAttribute: 'intelligence',
-    dailyTasks: [
-      {
-        id: 'learning-1',
-        name: 'Study Session',
-        xpReward: 15,
-        attributeRewards: { intelligence: 2, creativity: 1 }
-      },
-      {
-        id: 'learning-2',
-        name: 'Review Notes',
-        xpReward: 10,
-        attributeRewards: { intelligence: 1 }
-      }
-    ],
-    weeklyTasks: [
-      {
-        id: 'learning-weekly-1',
-        name: 'Deep Learning Project',
-        frequency: 1,
-        xpReward: 35,
-        attributeRewards: { intelligence: 3, creativity: 2 }
-      }
-    ],
-    titles: ['Student', 'Scholar', 'Researcher', 'Sage'],
-    perk: '+10% Intelligence gains from study tasks'
-  },
-  'creativity': {
-    name: 'Creative Flow',
-    icon: '🎨',
-    color: 'from-pink-600 to-rose-800',
-    attributes: ['creativity', 'intelligence'],
-    primaryAttribute: 'creativity',
-    dailyTasks: [
-      {
-        id: 'creativity-1',
-        name: 'Creative Practice',
-        xpReward: 15,
-        attributeRewards: { creativity: 2, intelligence: 1 }
-      },
-      {
-        id: 'creativity-2',
-        name: 'Inspiration Collection',
-        xpReward: 10,
-        attributeRewards: { creativity: 1 }
-      }
-    ],
-    weeklyTasks: [
-      {
-        id: 'creativity-weekly-1',
-        name: 'Major Creative Project',
-        frequency: 1,
-        xpReward: 35,
-        attributeRewards: { creativity: 3, intelligence: 2 }
-      }
-    ],
-    titles: ['Novice', 'Artist', 'Innovator', 'Maestro'],
-    perk: '+15% Creativity gains from artistic tasks'
   }
 };
 
@@ -188,7 +124,7 @@ export const ATTRIBUTES = {
 export const INITIAL_USER_STATS = {
   rank: 'E',
   xp: 0,
-  xpToNext: RANK_REQUIREMENTS['D'].xp,
+  xpToNext: 600,
   attributes: {
     spiritual: 0,
     health: 0,
@@ -205,8 +141,6 @@ export const INITIAL_USER_STATS = {
     creativity: 'E',
     resilience: 'E'
   },
-  streakDays: 0,
-  totalTitles: 0,
   startDate: new Date().toISOString(),
   statistics: {
     tasksCompleted: 0,
@@ -214,24 +148,4 @@ export const INITIAL_USER_STATS = {
     longestStreak: 0,
     totalXPGained: 0
   }
-};
-
-// src/constants/utils.js
-export const calculateAttributeRank = (value) => {
-  for (const [rank, requirements] of Object.entries(RANK_REQUIREMENTS).reverse()) {
-    if (value >= requirements.xp) {
-      return rank;
-    }
-  }
-  return 'E';
-};
-
-export const getNextRank = (currentRank) => {
-  const currentIndex = RANKS.indexOf(currentRank);
-  return currentIndex < RANKS.length - 1 ? RANKS[currentIndex + 1] : currentRank;
-};
-
-export const calculateLevelProgress = (experience, level) => {
-  const requiredXP = level * 100;
-  return (experience / requiredXP) * 100;
 };
