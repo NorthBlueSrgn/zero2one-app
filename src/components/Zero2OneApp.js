@@ -9,6 +9,13 @@ import { CustomPathModal } from './CustomPathModal';
 import { NewPathModal } from './NewPathModal';
 import { TaskItem } from './TaskItem';
 import { PathCard } from './PathCard';
+import { 
+  RANKS, 
+  RANK_REQUIREMENTS, 
+  INITIAL_USER_STATS, 
+  PATH_TEMPLATES,
+  ATTRIBUTES 
+} from '../constants';
 
 // Constants for progression
 const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
